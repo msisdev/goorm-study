@@ -1,0 +1,52 @@
+services:
+  mysql:
+    container_name: 'my-architecture-mysql'
+    image: 'mysql:latest'
+    environment:
+      - 'MYSQL_DATABASE=mydatabase'
+      - 'MYSQL_PASSWORD=secret'
+      - 'MYSQL_ROOT_PASSWORD=verysecret'
+      - 'MYSQL_USER=myuser'
+    volumes:
+      - mysql-data:/var/lib/mysql
+    ports:
+      - '3306:3306'
+    networks:
+      - mynetwork
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-pverysecret"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+  
+  accessing-data-mysql:
+    container_name: my-architecture-spring-db
+    image: 'docker.io/library/accessing-data-mysql:0.0.1-SNAPSHOT'
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      - SERVER_PORT=8081
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/mydatabase
+      - SPRING_DATASOURCE_USERNAME=myuser
+      - SPRING_DATASOURCE_PASSWORD=secret
+    ports:
+      - '8081:8081'
+    networks:
+      - mynetwork
+
+  rest-service:
+    container_name: my-architecture-spring-greeting
+    image: 'docker.io/library/rest-service:0.0.1-SNAPSHOT'
+    environment:
+      - SERVER_PORT=8080
+    ports:
+      - '8080:8080'
+    networks:
+      - mynetwork
+
+volumes:
+  mysql-data:
+
+networks:
+  mynetwork:
