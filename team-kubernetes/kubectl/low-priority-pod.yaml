@@ -1,0 +1,19 @@
+# kubectl create -f low-priority-pod.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: low-priority
+spec:
+  containers:
+  - name: low-priority
+    image: ubuntu
+    command: ["/bin/sh"]
+    args: ["-c", "while true; do echo hello; sleep 10;done"]
+    resources:
+      requests:
+        cpu: "1"
+        memory: "1Gi"
+      limits:
+        cpu: "1"
+        memory: "1Gi"
+  priorityClassName: low

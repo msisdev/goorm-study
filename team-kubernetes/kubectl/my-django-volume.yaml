@@ -1,0 +1,64 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-django-nodeport
+spec:
+  type: NodePort
+  ports:
+  - port: 8080
+    name: web
+    targetPort: 8000
+    nodePort: 30180
+  selector:
+    app: my-django
+
+---
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: my-django-pvc
+spec:
+  resources:
+    requests:
+      storage: 100Mi
+  accessModes:
+    - ReadWriteOnce
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-django-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: my-django
+  template:
+    metadata:
+      labels:
+        app: my-django
+    spec:
+      containers:
+      - name: my-django
+        image: msisdev/my-django:0.0.3
+        ports:
+        - containerPort: 8000
+          name: web
+        resources:
+          limits:
+            cpu: "1"
+            memory: "512Mi"
+          requests:
+            cpu: "500m"
+            memory: "256Mi"
+        volumeMounts:
+        - name: django-persistent-storage
+          mountPath: /app/data
+          readOnly: false
+      volumes:
+      - name: django-persistent-storage
+        persistentVolumeClaim:
+          claimName: my-django-pvc
